@@ -1,6 +1,6 @@
 import React, { Fragment, useRef, useLayoutEffect, useState } from 'react'
 import ReactDOM, { createPortal } from 'react-dom'
-import { createForm } from '@formily/core'
+import { createForm, IFormProps } from '@formily/core'
 import { FormProvider } from '@formily/react'
 import { isNum, isStr, isBool, isFn } from '@formily/shared'
 import { Modal } from 'antd'
@@ -13,13 +13,17 @@ type FormDialogContent =
 
 type ModalTitle = string | number | React.ReactElement
 
+interface IFormModalProps extends ModalProps {
+  onCancel?: (e: React.MouseEvent<HTMLElement>) => boolean | void
+}
+
 const isModalTitle = (props: any): props is ModalTitle => {
   return (
     isNum(props) || isStr(props) || isBool(props) || React.isValidElement(props)
   )
 }
 
-const getModelProps = (props: any): ModalProps => {
+const getModelProps = (props: any): IFormModalProps => {
   if (isModalTitle(props)) {
     return {
       title: props,
@@ -30,7 +34,7 @@ const getModelProps = (props: any): ModalProps => {
 }
 
 export interface IFormDialog {
-  open(props?: Formily.Core.Types.IFormProps): Promise<any>
+  open(props?: IFormProps): Promise<any>
   close(): void
 }
 
@@ -41,7 +45,7 @@ export interface IFormDialogComponentProps {
 }
 
 export function FormDialog(
-  title: ModalProps,
+  title: IFormModalProps,
   content: FormDialogContent
 ): IFormDialog
 export function FormDialog(
@@ -79,8 +83,8 @@ export function FormDialog(title: any, content: any): IFormDialog {
         {...modal}
         visible={visible}
         onCancel={(e) => {
-          modal?.onCancel?.(e)
-          formDialog.close()
+          const closeable = !modal?.onCancel?.(e)
+          closeable && formDialog.close()
         }}
         onOk={async (e) => {
           modal?.onOk?.(e)
@@ -100,7 +104,7 @@ export function FormDialog(title: any, content: any): IFormDialog {
   }
   document.body.appendChild(env.root)
   const formDialog = {
-    open: (props: Formily.Core.Types.IFormProps) => {
+    open: (props: IFormProps) => {
       if (env.promise) return env.promise
       env.form = env.form || createForm(props)
       env.promise = new Promise((resolve) => {

@@ -1,6 +1,6 @@
 import React, { Fragment, useLayoutEffect, useRef, useState } from 'react'
 import ReactDOM, { createPortal } from 'react-dom'
-import { createForm } from '@formily/core'
+import { createForm, IFormProps } from '@formily/core'
 import { FormProvider } from '@formily/react'
 import { isNum, isStr, isBool, isFn } from '@formily/shared'
 import { Drawer } from 'antd'
@@ -11,6 +11,14 @@ type FormDrawerContent =
   | React.ReactElement
   | ((resolve: () => any, reject: () => any) => React.ReactElement)
 
+type EventType =
+  | React.KeyboardEvent<HTMLDivElement>
+  | React.MouseEvent<HTMLDivElement | HTMLButtonElement>
+
+interface IFormDrawerProps extends DrawerProps {
+  onClose?: (e: EventType) => boolean | void
+}
+
 type DrawerTitle = string | number | React.ReactElement
 
 const isDrawerTitle = (props: any): props is DrawerTitle => {
@@ -19,7 +27,7 @@ const isDrawerTitle = (props: any): props is DrawerTitle => {
   )
 }
 
-const getDrawerProps = (props: any): DrawerProps => {
+const getDrawerProps = (props: any): IFormDrawerProps => {
   if (isDrawerTitle(props)) {
     return {
       title: props,
@@ -30,7 +38,7 @@ const getDrawerProps = (props: any): DrawerProps => {
 }
 
 export interface IFormDrawer {
-  open(props?: Formily.Core.Types.IFormProps): Promise<any>
+  open(props?: IFormProps): Promise<any>
   close(): void
 }
 
@@ -41,7 +49,7 @@ export interface IFormDrawerComponentProps {
 }
 
 export function FormDrawer(
-  title: DrawerProps,
+  title: IFormDrawerProps,
   content: FormDrawerContent
 ): IFormDrawer
 export function FormDrawer(
@@ -59,8 +67,9 @@ export function FormDrawer(title: any, content: any): IFormDrawer {
     width: '40%',
     ...props,
     onClose: (e: any) => {
-      props?.onClose?.(e)
-      formDrawer.close()
+      const closeable = !props?.onClose?.(e)
+
+      closeable && formDrawer.close()
     },
     afterVisibleChange: (visible: boolean) => {
       props?.afterVisibleChange?.(visible)
@@ -95,7 +104,7 @@ export function FormDrawer(title: any, content: any): IFormDrawer {
   }
   document.body.appendChild(env.root)
   const formDrawer = {
-    open: (props: Formily.Core.Types.IFormProps) => {
+    open: (props: IFormProps) => {
       if (env.promise) return env.promise
       env.form = env.form || createForm(props)
       env.promise = new Promise((resolve) => {

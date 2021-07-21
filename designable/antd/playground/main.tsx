@@ -28,7 +28,6 @@ import {
   MarkupSchemaWidget,
 } from './widgets'
 import 'antd/dist/antd.less'
-
 GlobalRegistry.registerDesignerLocales({
   'zh-CN': {
     sources: {
